@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm rounded-4">
+        <div class="card-header" style="background-color:#E6A407; color:#FFFFFF;">
+            <h4 class="mb-0">Delete Vendor</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger" role="alert">
+                Are you sure you want to delete <strong>{{ vendor.name }}</strong>?
+            </div>
+            <form method="post" class="d-flex gap-2">
+                {% csrf_token %}
+                <button type="submit" class="btn" style="background-color:#E6A407; color:#FFFFFF; border-radius:8px;">
+                    Delete
+                </button>
+                <a href="{% url 'vendor_list' %}" class="btn btn-secondary" style="border-radius:8px;">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

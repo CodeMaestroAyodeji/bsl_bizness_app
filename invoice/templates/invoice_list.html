@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Invoices</h2>
+        <a href="{% url 'invoice_create' %}" class="btn" style="background-color:#E6A407; color:#fff;">
+            <i class="bi bi-file-earmark-plus me-2"></i> Create New Invoice
+        </a>
+    </div>
+
+    <form action="{% url 'invoice_bulk_download' %}" method="post" class="mb-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary mb-3" id="bulk-download-btn" disabled>
+            <i class="bi bi-download me-2"></i> Download Selected Invoices
+        </button>
+
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th><input type="checkbox" id="select-all-invoices"></th>
+                        <th>Invoice Number</th>
+                        <th>Vendor</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td><input type="checkbox" name="invoice_ids" value="{{ invoice.pk }}" class="invoice-checkbox"></td>
+                        <td>{{ invoice.invoice_number }}</td>
+                        <td>{{ invoice.vendor.name }}</td>
+                        <td>{{ invoice.invoice_date|date:"d/m/Y" }}</td>
+                        <td>{{ invoice.total|floatformat:2 }}</td>
+                        <td>
+                            <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-info btn-sm">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'invoice_update' invoice.pk %}" class="btn btn-warning btn-sm text-white">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'invoice_delete' invoice.pk %}" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No invoices found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('select-all-invoices');
+    const invoiceCheckboxes = document.querySelectorAll('.invoice-checkbox');
+    const bulkDownloadBtn = document.getElementById('bulk-download-btn');
+
+    function updateBulkDownloadButton() {
+        const anyChecked = Array.from(invoiceCheckboxes).some(checkbox => checkbox.checked);
+        bulkDownloadBtn.disabled = !anyChecked;
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+        invoiceCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+        updateBulkDownloadButton();
+    });
+
+    invoiceCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            if (!this.checked) selectAllCheckbox.checked = false;
+            else selectAllCheckbox.checked = Array.from(invoiceCheckboxes).every(cb => cb.checked);
+            updateBulkDownloadButton();
+        });
+    });
+
+    updateBulkDownloadButton();
+});
+</script>
+{% endblock %}

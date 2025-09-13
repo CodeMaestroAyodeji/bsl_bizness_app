@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm rounded-4">
+        <div class="card-header" style="background-color:#E6A407; color:#FFFFFF;">
+            <h4 class="mb-0">Edit Role for {{ user.username }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    {{ form.as_p }}
+                </div>
+                <button type="submit" class="btn" style="background-color:#E6A407; color:#fff; border-radius:8px;">
+                    Save Role
+                </button>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary" style="border-radius:8px;">
+                    Back to User List
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

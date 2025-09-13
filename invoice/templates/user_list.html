@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 1200px;">
+  <div class="card shadow-lg rounded-4 border-0" style="background-color: #FFFFFF;">
+    
+    <!-- Header -->
+    <div class="card-header text-white rounded-top-4 d-flex justify-content-between align-items-center"
+         style="background-color: #3F4448;">
+      <h2 class="mb-0 fw-bold">User Management</h2>
+    </div>
+    
+    <div class="card-body p-4">
+      
+      <!-- Search & Filter Row -->
+      <form method="get" class="row g-3 mb-4 align-items-center">
+        <div class="col-md-6">
+          <input type="text" name="search" class="form-control rounded-3"
+                 placeholder="Search by username or email..."
+                 value="{{ request.GET.search }}">
+        </div>
+        <div class="col-md-4">
+          <select name="role" class="form-select rounded-3">
+            <option value="">All Roles</option>
+            <option value="admin" {% if request.GET.role == "admin" %}selected{% endif %}>Admin</option>
+            <option value="manager" {% if request.GET.role == "manager" %}selected{% endif %}>Manager</option>
+            <option value="staff" {% if request.GET.role == "staff" %}selected{% endif %}>Staff</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-grid">
+          <button type="submit" class="btn fw-semibold text-white rounded-3"
+                  style="background-color: #E6A407; border: none;">
+            Filter
+          </button>
+        </div>
+      </form>
+      
+      <!-- User Table -->
+      <div class="table-responsive">
+        <table class="table align-middle table-hover">
+          <thead style="background-color: #E6A407; color: #FFFFFF;">
+            <tr>
+              <th scope="col">Username</th>
+              <th scope="col">Email</th>
+              <th scope="col">Role</th>
+              <th scope="col" class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+              <tr style="background-color: #FAFAFA;">
+                <td class="fw-semibold text-dark">{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span class="badge rounded-pill px-3 py-2"
+                        style="background-color: #CABE9F; color: #3F4448;">
+                    {{ user.profile.get_role_display }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <a href="{% url 'user_edit_role' user.pk %}" 
+                     class="btn btn-sm fw-semibold text-white rounded-3"
+                     style="background-color: #3F4448; border: none; transition: 0.3s;">
+                    Edit Role
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                  No users found.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

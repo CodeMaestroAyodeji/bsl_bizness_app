@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Delete Invoice</h2>
+    <div class="alert alert-danger" role="alert">
+        Are you sure you want to delete invoice <strong>{{ invoice.invoice_number }}</strong> from vendor <strong>{{ invoice.vendor.name }}</strong>?
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color:#3F4448;">Vendors</h2>
+        <a href="{% url 'vendor_create' %}" class="btn btn-lg" 
+           style="background-color:#E6A407; color:#FFFFFF; border-radius:8px;">
+            <i class="bi bi-plus-circle me-2"></i> Add Vendor
+        </a>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-2">
+            <input type="text" id="vendorSearch" class="form-control" placeholder="Search vendors...">
+        </div>
+        <div class="col-md-6 mb-2">
+            <select id="vendorFilter" class="form-select">
+                <option value="">All Vendors</option>
+                {% for vendor in vendors %}
+                    <option value="{{ vendor.name }}">{{ vendor.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Vendors Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead style="background-color:#3F4448; color:#FFFFFF;">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Vendor Name</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="vendorTable">
+                {% for vendor in vendors %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ vendor.name }}</td>
+                    <td>
+                        <a href="{% url 'vendor_detail' vendor.pk %}" 
+                           class="btn btn-sm" style="background-color:#CABE9F; color:#3F4448; border-radius:6px;">
+                            View
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">No vendors available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Search & Filter Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("vendorSearch");
+        const filterSelect = document.getElementById("vendorFilter");
+        const tableRows = document.querySelectorAll("#vendorTable tr");
+
+        function filterVendors() {
+            const searchValue = searchInput.value.toLowerCase();
+            const filterValue = filterSelect.value.toLowerCase();
+
+            tableRows.forEach(row => {
+                const vendorName = row.cells[1]?.textContent.toLowerCase() || "";
+                const matchesSearch = vendorName.includes(searchValue);
+                const matchesFilter = filterValue === "" || vendorName === filterValue;
+
+                row.style.display = (matchesSearch && matchesFilter) ? "" : "none";
+            });
+        }
+
+        searchInput.addEventListener("keyup", filterVendors);
+        filterSelect.addEventListener("change", filterVendors);
+    });
+</script>
+{% endblock %}
