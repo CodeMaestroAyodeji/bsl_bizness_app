@@ -80,8 +80,8 @@
 <body>
     <div class="invoice-container">
         <div class="header">
-            {% if client.logo %}
-                <img src="data:image/png;base64,{{ client.logo.read().decode('utf-8') }}" alt="{{ client.company_name }} Logo" style="max-height: 80px; margin-bottom: 10px;">
+            {% if logo_data %}
+                <img src="data:image/png;base64,{{ logo_data }}" alt="{{ client.company_name }} Logo" style="max-height: 80px; margin-bottom: 10px;">
             {% endif %}
             <h1>{{ client.company_name }}</h1>
             <p>{{ client.address }} | {{ client.phone_number }} | {{ client.email }}</p>

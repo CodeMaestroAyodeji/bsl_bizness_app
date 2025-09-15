@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
+{% load invoice_tags %}
 
 {% block content %}
 <div class="container mt-4">
@@ -8,6 +10,14 @@
             <i class="bi bi-file-earmark-plus me-2"></i> Create New Invoice
         </a>
     </div>
+
+    <!-- Search form -->
+    <form method="get" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control" placeholder="Search by invoice number or vendor" value="{{ request.GET.q }}">
+            <button class="btn btn-outline-secondary" type="submit">Search</button>
+        </div>
+    </form>
 
     <form action="{% url 'invoice_bulk_download' %}" method="post" class="mb-3">
         {% csrf_token %}
@@ -34,7 +44,7 @@
                         <td>{{ invoice.invoice_number }}</td>
                         <td>{{ invoice.vendor.name }}</td>
                         <td>{{ invoice.invoice_date|date:"d/m/Y" }}</td>
-                        <td>{{ invoice.total|floatformat:2 }}</td>
+                        <td>{{ invoice.total|naira }}</td>
                         <td>
                             <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-info btn-sm">
                                 <i class="bi bi-eye"></i>
@@ -56,6 +66,33 @@
             </table>
         </div>
     </form>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if invoices.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">&laquo; First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ invoices.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1" aria-disabled="True">Page {{ invoices.number }} of {{ invoices.paginator.num_pages }}</a>
+            </li>
+
+            {% if invoices.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ invoices.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ invoices.paginator.num_pages }}">Last &raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
 
 <script>

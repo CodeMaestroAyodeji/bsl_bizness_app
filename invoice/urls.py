@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 from django.contrib.auth import views as auth_views
 
@@ -7,13 +7,14 @@ urlpatterns = [
     path('signup/', views.signup, name='signup'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('profile/', views.profile, name='profile'),
 
     path('vendors/', views.vendor_list, name='vendor_list'),
     path('vendors/new/', views.vendor_create, name='vendor_create'),
-    path('vendors/<str:pk>/', views.vendor_detail, name='vendor_detail'),
-    path('vendors/<str:pk>/edit/', views.vendor_update, name='vendor_update'),
-    path('vendors/<str:pk>/delete/', views.vendor_delete, name='vendor_delete'),
-    path('vendors/<str:pk>/logo/', views.vendor_logo, name='vendor_logo'),
+    re_path(r'^vendors/(?P<pk>[0-9a-f]{24})/$', views.vendor_detail, name='vendor_detail'),
+    re_path(r'^vendors/(?P<pk>[0-9a-f]{24})/edit/$', views.vendor_update, name='vendor_update'),
+    re_path(r'^vendors/(?P<pk>[0-9a-f]{24})/delete/$', views.vendor_delete, name='vendor_delete'),
+    re_path(r'^vendors/(?P<pk>[0-9a-f]{24})/logo/$', views.vendor_logo, name='vendor_logo'),
 
     path('settings/', views.client_settings, name='client_settings'),
     path('users/', views.user_list, name='user_list'),
@@ -26,9 +27,18 @@ urlpatterns = [
 
     path('invoices/', views.invoice_list, name='invoice_list'),
     path('invoices/new/', views.invoice_create, name='invoice_create'),
-    path('invoices/<str:pk>/', views.invoice_detail, name='invoice_detail'),
-    path('invoices/<str:pk>/edit/', views.invoice_update, name='invoice_update'),
-    path('invoices/<str:pk>/delete/', views.invoice_delete, name='invoice_delete'),
-    path('invoices/<str:pk>/print/', views.invoice_print_preview, name='invoice_print_preview'),
     path('invoices/bulk_download/', views.invoice_bulk_download, name='invoice_bulk_download'),
+    re_path(r'^invoices/(?P<pk>[0-9a-f]{24})/$', views.invoice_detail, name='invoice_detail'),
+    re_path(r'^invoices/(?P<pk>[0-9a-f]{24})/edit/$', views.invoice_update, name='invoice_update'),
+    re_path(r'^invoices/(?P<pk>[0-9a-f]{24})/delete/$', views.invoice_delete, name='invoice_delete'),
+    re_path(r'^invoices/(?P<pk>[0-9a-f]{24})/print/$', views.invoice_print_preview, name='invoice_print_preview'),
+
+    # Purchase Order URLs
+    path('purchase-orders/', views.po_list, name='po_list'),
+    path('purchase-orders/new/', views.po_create, name='po_create'),
+    path('purchase-orders/<str:pk>/', views.po_detail, name='po_detail'),
+    path('purchase-orders/<str:pk>/edit/', views.po_update, name='po_update'),
+    path('purchase-orders/<str:pk>/delete/', views.po_delete, name='po_delete'),
+    path('purchase-orders/<str:pk>/download/', views.po_download, name='po_download'),
+    path('purchase-orders/bulk_download/', views.po_bulk_download, name='po_bulk_download'),
 ]

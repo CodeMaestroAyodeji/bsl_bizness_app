@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if po %}Edit{% else %}Create{% endif %} Purchase Order - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <form method="post" id="po-form">
+        {% csrf_token %}
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header" style="background-color: #3F4448; color: #FFFFFF;">
+                <h2 class="mb-0">{% if po %}Edit{% else %}Create{% endif %} Purchase Order</h2>
+            </div>
+            <div class="card-body">
+                <!-- PO Details -->
+                <div class="row mb-3">
+                    <div class="col-md-6">{{ po_form.vendor.label_tag }} {{ po_form.vendor }}</div>
+                    <div class="col-md-3">{{ po_form.po_date.label_tag }} {{ po_form.po_date }}</div>
+                    <div class="col-md-3">{{ po_form.po_number.label_tag }} {{ po_form.po_number }}</div>
+                </div>
+
+                <!-- PO Items -->
+                <h4 class="mt-4" style="color: #3F4448;">Items</h4>
+                <div id="formset-container">
+                    {{ formset.management_form }}
+                    <table class="table">
+                        <thead style="background-color: #E6A407; color: #3F4448;">
+                            <tr>
+                                <th>Description</th>
+                                <th style="width: 15%;">Quantity</th>
+                                <th style="width: 15%;">Unit Price</th>
+                                <th style="width: 5%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="formset-body">
+                        {% for form in formset %}
+                            <tr class="item-form">
+                                <td>{{ form.description }}</td>
+                                <td>{{ form.quantity }}</td>
+                                <td>{{ form.unit_price }}</td>
+                                <td><button type="button" class="btn btn-sm btn-danger remove-form">X</button></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" id="add-form" class="btn btn-sm" style="background-color: #CABE9F; color: #3F4448;">+ Add Item</button>
+
+                <!-- Terms -->
+                <div class="mt-4">
+                    {{ po_form.terms.label_tag }}
+                    {{ po_form.terms }}
+                </div>
+            </div>
+            <div class="card-footer text-end">
+                <a href="{% url 'po_list' %}" class="btn btn-light">Cancel</a>
+                <button type="submit" class="btn" style="background-color: #E6A407; color: #3F4448;">Save Purchase Order</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formsetContainer = document.querySelector('#formset-body');
+    const addFormButton = document.querySelector('#add-form');
+    const totalForms = document.querySelector('input[name="form-TOTAL_FORMS"]');
+    const formTemplate = document.querySelector('.item-form').cloneNode(true);
+
+    function updateFormIndices() {
+        const forms = formsetContainer.querySelectorAll('.item-form');
+        forms.forEach((form, index) => {
+            form.querySelectorAll('input, select, textarea').forEach(input => {
+                const name = input.getAttribute('name').replace(/-\d+-/, `-${index}-`);
+                input.setAttribute('name', name);
+                input.setAttribute('id', `id_${name}`);
+            });
+        });
+    }
+
+    addFormButton.addEventListener('click', function() {
+        const newForm = formTemplate.cloneNode(true);
+        newForm.querySelectorAll('input').forEach(input => input.value = '');
+        formsetContainer.appendChild(newForm);
+        totalForms.value = parseInt(totalForms.value) + 1;
+        updateFormIndices();
+    });
+
+    formsetContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-form')) {
+            const formToRemove = e.target.closest('.item-form');
+            if (formsetContainer.querySelectorAll('.item-form').length > 1) {
+                formToRemove.remove();
+                totalForms.value = parseInt(totalForms.value) - 1;
+                updateFormIndices();
+            } else {
+                alert("You must have at least one item.");
+            }
+        }
+    });
+
+    // Add Bootstrap classes to form fields
+    document.querySelectorAll('#po-form input, #po-form select, #po-form textarea').forEach(field => {
+        if (field.type !== 'hidden' && field.type !== 'checkbox') {
+            field.classList.add('form-control');
+        }
+    });
+});
+</script>
+{% endblock %}

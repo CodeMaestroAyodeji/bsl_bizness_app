@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 import mongoengine as me
 from datetime import datetime
 from num2words import num2words
+from django.utils import timezone
 
 class Vendor(me.Document):
     user_id = me.IntField(required=True)
@@ -57,6 +58,12 @@ class Profile(models.Model):
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='project_manager')
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    bio = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f'{self.user.username} - {self.get_role_display()}'
@@ -143,3 +150,40 @@ class Invoice(me.Document):
         else:
             new_number = 1
         return f'INV/{vendor_initials}/{year}/{new_number:04d}'
+
+
+class PurchaseOrderItem(me.EmbeddedDocument):
+    description = me.StringField(required=True)
+    quantity = me.FloatField(required=True)
+    unit_price = me.DecimalField(required=True, precision=2)
+
+    @property
+    def amount(self):
+        return self.quantity * float(self.unit_price)
+
+class PurchaseOrder(me.Document):
+    vendor = me.ReferenceField('Vendor', required=True)
+    po_number = me.StringField(max_length=255, unique=True)
+    po_date = me.DateTimeField(default=datetime.now)
+    terms = me.StringField()
+    items = me.ListField(me.EmbeddedDocumentField(PurchaseOrderItem))
+
+    @property
+    def sub_total(self):
+        return sum(item.amount for item in self.items)
+
+    @property
+    def total(self):
+        return self.sub_total
+
+    def save(self, *args, **kwargs):
+        if not self.po_number:
+            self.po_number = self._generate_po_number()
+        super().save(*args, **kwargs)
+
+    def _generate_po_number(self):
+        year = datetime.now().year
+        vendor_initials = "".join([name[0] for name in self.vendor.name.split()]).upper()
+        last_po = PurchaseOrder.objects(po_number__startswith=f'PO/{vendor_initials}/{year}/').order_by('-po_number').first()
+        new_number = int(last_po.po_number.split('/')[-1]) + 1 if last_po else 1
+        return f'PO/{vendor_initials}/{year}/{new_number:04d}'

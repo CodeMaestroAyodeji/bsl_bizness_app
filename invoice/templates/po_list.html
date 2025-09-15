@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Purchase Orders - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #3F4448; color: #FFFFFF;">
+            <h2 class="mb-0">Purchase Orders</h2>
+            <a href="{% url 'po_create' %}" class="btn" style="background-color: #E6A407; color: #FFFFFF;">
+                <i class="bi bi-plus-circle me-2"></i> Create Purchase Order
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'po_bulk_download' %}">
+                {% csrf_token %}
+                <!-- Search and Bulk Actions -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <form method="get" class="d-flex">
+                            <input type="text" name="q" class="form-control me-2" placeholder="Search by PO number or Vendor" value="{{ request.GET.q }}">
+                            <button type="submit" class="btn" style="background-color: #CABE9F; color: #3F4448;">Search</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button type="submit" class="btn" style="background-color: #3F4448; color: #FFFFFF;">
+                            <i class="bi bi-download me-2"></i> Download Selected
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PO Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead style="background-color: #E6A407; color: #3F4448;">
+                            <tr>
+                                <th scope="col" class="text-center"><input type="checkbox" id="selectAll"></th>
+                                <th scope="col">PO Number</th>
+                                <th scope="col">Vendor</th>
+                                <th scope="col">Date</th>
+                                <th scope="col" class="text-end">Total</th>
+                                <th scope="col" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for po in purchase_orders %}
+                            <tr>
+                                <td class="text-center"><input type="checkbox" name="po_ids" value="{{ po.id }}"></td>
+                                <td><a href="{% url 'po_detail' po.pk %}">{{ po.po_number }}</a></td>
+                                <td>{{ po.vendor.name }}</td>
+                                <td>{{ po.po_date|date:"d/m/Y" }}</td>
+                                <td class="text-end">₦{{ po.total|floatformat:2|intcomma }}</td>
+                                <td class="text-center">
+                                    <a href="{% url 'po_detail' po.pk %}" class="btn btn-sm" style="background-color: #CABE9F; color: #3F4448;">View</a>
+                                    <a href="{% url 'po_update' po.pk %}" class="btn btn-sm" style="background-color: #3F4448; color: #FFFFFF;">Edit</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No purchase orders found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+
+            <!-- Pagination -->
+            {% if purchase_orders.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if purchase_orders.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ purchase_orders.previous_page_number }}">Previous</a></li>
+                    {% endif %}
+
+                    <li class="page-item disabled"><a class="page-link" href="#">Page {{ purchase_orders.number }} of {{ purchase_orders.paginator.num_pages }}</a></li>
+
+                    {% if purchase_orders.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ purchase_orders.next_page_number }}">Next</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ purchase_orders.paginator.num_pages }}">Last &raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('selectAll').addEventListener('change', function(e) {
+    var checkboxes = document.querySelectorAll('input[name="po_ids"]');
+    for (var checkbox of checkboxes) {
+        checkbox.checked = e.target.checked;
+    }
+});
+</script>
+{% endblock %}

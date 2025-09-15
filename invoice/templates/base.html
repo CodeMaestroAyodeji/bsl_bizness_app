@@ -96,15 +96,22 @@
                         </li>
                         {% endif %}
 
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}">
-                                <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if user.profile.profile_picture %}
+                                    <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="rounded-circle" style="width: 30px; height: 30px; object-fit: cover;">
+                                {% else %}
+                                    <div style="width: 30px; height: 30px; border-radius: 50%; background-color: #ccc;" class="d-flex justify-content-center align-items-center">
+                                        <span class="text-white" style="font-size: 1rem;">{{ user.username.0|upper }}</span>
+                                    </div>
+                                {% endif %}
+                                Welcome, {{ user.username }}
                             </a>
-                        </li>
-                        <li class="nav-item">
-                            <span class="nav-link">
-                                <i class="fa-solid fa-user-circle"></i> Welcome, {{ user.username }}
-                            </span>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                            </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">

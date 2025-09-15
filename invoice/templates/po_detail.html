@@ -1,0 +1,202 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PO {{ po.po_number }} - {{ po.vendor.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .po-container {
+            width: 210mm; /* A4 width */
+            min-height: 297mm; /* A4 height */
+            margin: 20px auto;
+            padding: 20mm;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #FFFFFF; /* White background */
+        }
+        .header {
+            border-bottom: 4px solid #E6A407; /* Accent color */
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        .po-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #3F4448; /* Dark text color */
+        }
+        .details-box {
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        .details-box h5 {
+            color: #3F4448;
+            border-bottom: 2px solid #E6A407;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .po-items table {
+            width: 100%;
+            margin-top: 30px;
+        }
+        .po-items th {
+            background-color: #3F4448; /* Dark header */
+            color: #FFFFFF; /* White text */
+            padding: 10px;
+        }
+        .po-items td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .summary {
+            float: right;
+            width: 45%;
+            margin-top: 20px;
+        }
+        .summary td {
+            padding: 8px;
+        }
+        .summary .total-row td {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background-color: #E6A407; /* Accent color for total */
+            color: #3F4448;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 0.8rem;
+            color: #777;
+            text-align: center;
+        }
+        .no-print {
+            text-align: center;
+            margin: 20px;
+        }
+        .no-print .btn-primary { background-color: #E6A407; border-color: #E6A407; color: #3F4448; }
+        .no-print .btn-secondary { background-color: #3F4448; border-color: #3F4448; color: #FFFFFF; }
+        .no-print .btn-light { background-color: #CABE9F; border-color: #CABE9F; color: #3F4448; }
+
+        @media print {
+            body { background-color: #FFFFFF; }
+            .po-container {
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+            }
+            .no-print { display: none; }
+            @page {
+                size: A4;
+                margin: 20mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="po-container">
+        <div class="header row align-items-center">
+            <div class="col-6">
+                {% if client.logo %}
+                    <img src="{{ client.logo.url }}" alt="{{ client.company_name }} Logo" style="max-height: 80px;">
+                {% else %}
+                    <h4 class="mb-0">{{ client.company_name }}</h4>
+                {% endif %}
+            </div>
+            <div class="col-6 text-end">
+                <h1 class="po-title">PURCHASE ORDER</h1>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-7">
+                <div class="details-box">
+                    <h5>Vendor</h5>
+                    <p class="mb-1"><strong>{{ po.vendor.name }}</strong></p>
+                    <p class="mb-1">{{ po.vendor.address }}</p>
+                    <p class="mb-1">{{ po.vendor.city }}, {{ po.vendor.state }} {{ po.vendor.zip_code }}</p>
+                    <p class="mb-0">TIN: {{ po.vendor.tax_tin }}</p>
+                </div>
+            </div>
+            <div class="col-5">
+                <div class="details-box">
+                    <p class="mb-1"><strong>PO Number:</strong> {{ po.po_number }}</p>
+                    <p class="mb-0"><strong>Date:</strong> {{ po.po_date|date:"F j, Y" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="po-items">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Description</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in po.items %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.description }}</td>
+                        <td class="text-center">{{ item.quantity|floatformat:2|intcomma }}</td>
+                        <td class="text-end">₦{{ item.unit_price|floatformat:2|intcomma }}</td>
+                        <td class="text-end">₦{{ item.amount|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="summary">
+            <table class="table">
+                <tr>
+                    <td>Sub-total:</td>
+                    <td class="text-end">₦{{ po.sub_total|floatformat:2|intcomma }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>TOTAL</strong></td>
+                    <td class="text-end"><strong>₦{{ po.total|floatformat:2|intcomma }}</strong></td>
+                </tr>
+            </table>
+        </div>
+        <div style="clear: both;"></div>
+
+        <div class="terms mt-5">
+            <h5>Terms & Conditions</h5>
+            <p style="font-size: 0.9rem;">{{ po.terms|linebreaksbr }}</p>
+        </div>
+
+        <div class="footer">
+            <p>{{ client.company_name }} | {{ client.address }} | {{ client.email }}</p>
+            <p>Thank you for your business!</p>
+        </div>
+    </div>
+
+    <div class="no-print">
+        <button onclick="window.print()" class="btn btn-primary fw-bold">
+            <i class="bi bi-printer me-2"></i> Print / Save as PDF
+        </button>
+        <a href="{% url 'po_download' po.pk %}" class="btn btn-secondary fw-bold">
+            <i class="bi bi-file-earmark-pdf me-2"></i> Download PDF
+        </a>
+        <a href="{% url 'po_list' %}" class="btn btn-light fw-bold">
+            <i class="bi bi-arrow-left-circle me-2"></i> Back to List
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

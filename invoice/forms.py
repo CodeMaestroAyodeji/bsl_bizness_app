@@ -51,3 +51,36 @@ class InvoiceItemForm(forms.Form):
     tax = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input tax item-input'}))
 
 InvoiceItemFormSet = forms.formset_factory(InvoiceItemForm, extra=1)
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['profile_picture', 'phone_number', 'address', 'bio']
+
+
+# --- Purchase Order Forms ---
+
+class PurchaseOrderItemForm(forms.Form):
+    description = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Item description'})
+    )
+    quantity = forms.FloatField(
+        initial=1.0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '0'})
+    )
+    unit_price = forms.DecimalField(
+        initial=0.0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '0'})
+    )
+
+PurchaseOrderItemFormSet = forms.formset_factory(PurchaseOrderItemForm, extra=1)
+
+class PurchaseOrderForm(forms.Form):
+    vendor = forms.ChoiceField(choices=[])
+    po_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}), label="PO Date")
+    po_number = forms.CharField(max_length=50, required=False, help_text="Leave blank to auto-generate.", label="PO Number")
+    terms = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}), required=False, label="Terms & Conditions")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['vendor'].choices = [("", "Select a Vendor")] + [(str(v.id), v.name) for v in Vendor.objects.all()]

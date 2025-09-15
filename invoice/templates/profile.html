@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div style="width: 150px; height: 150px; border-radius: 50%; background-color: #ccc; margin: 0 auto 20px;" class="d-flex justify-content-center align-items-center">
+                            <span class="text-white" style="font-size: 3rem;">{{ user.username.0|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <h5 class="card-title">{{ user.username }}</h5>
+                    <p class="card-text text-muted">{{ user.profile.get_role_display }}</p>
+                    <p class="card-text">{{ user.email }}</p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Joined: {{ user.date_joined|date:"d M Y" }}</li>
+                    <li class="list-group-item">Last updated: {{ user.profile.updated_at|date:"d M Y" }}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Profile Information</h5>
+                    <hr>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_profile_picture" class="form-label">Profile Picture</label>
+                            {% render_field form.profile_picture class="form-control" %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_phone_number" class="form-label">Phone Number</label>
+                            {% render_field form.phone_number class="form-control" %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_address" class="form-label">Address</label>
+                            {% render_field form.address class="form-control" %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_bio" class="form-label">Bio</label>
+                            {% render_field form.bio class="form-control" rows="3" %}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

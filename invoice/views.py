@@ -153,10 +153,34 @@ from .forms import InvoiceForm, InvoiceItemFormSet
 from django.forms import formset_factory
 from mongoengine.errors import DoesNotExist
 
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from mongoengine.queryset.visitor import Q
+
 @login_required
 @roles_required(allowed_roles=['admin', 'project_manager', 'accountant'])
 def invoice_list(request):
-    invoices = Invoice.objects.all()
+    invoices_list = Invoice.objects.all()
+
+    # Search and filter
+    query = request.GET.get('q')
+    if query:
+        vendor_ids = [vendor.id for vendor in Vendor.objects.filter(name__icontains=query)]
+        invoices_list = invoices_list.filter(
+            Q(invoice_number__icontains=query) | Q(vendor__in=vendor_ids)
+        )
+
+    # Pagination
+    paginator = Paginator(invoices_list, 10) # 10 invoices per page
+    page = request.GET.get('page')
+    try:
+        invoices = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        invoices = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        invoices = paginator.page(paginator.num_pages)
+
     return render(request, 'invoice_list.html', {'invoices': invoices})
 
 @login_required
@@ -306,10 +330,14 @@ def invoice_bulk_download(request):
             for invoice_id in invoice_ids:
                 try:
                     invoice = Invoice.objects.get(pk=invoice_id)
-                    client = Client.load() # Assuming there's only one client
+                    client = Client.load()
                     
+                    logo_data = None
+                    if client.logo and client.logo.grid_id:
+                        logo_data = base64.b64encode(client.logo.read()).decode('utf-8')
+
                     # Render invoice to HTML
-                    html_content = render_to_string('invoice_print.html', {'invoice': invoice, 'client': client})
+                    html_content = render_to_string('invoice_print.html', {'invoice': invoice, 'client': client, 'logo_data': logo_data})
                     
                     # Add to zip file
                     filename = f"invoice_{invoice.invoice_number.replace('/', '_')}.html"
@@ -362,3 +390,173 @@ def vendor_logo(request, pk):
     buffer = io.BytesIO()
     img.save(buffer, format='PNG')
     return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+from .forms import ProfileForm
+
+@login_required
+def profile(request):
+    profile = request.user.profile
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+    else:
+        form = ProfileForm(instance=profile)
+    return render(request, 'profile.html', {'form': form})
+
+
+# --- Purchase Order Views ---
+from .models import PurchaseOrder, PurchaseOrderItem
+from .forms import PurchaseOrderForm, PurchaseOrderItemFormSet
+# from weasyprint import HTML
+
+@login_required
+@roles_required(allowed_roles=['admin', 'project_manager', 'accountant'])
+def po_list(request):
+    po_list = PurchaseOrder.objects.order_by('-po_date')
+
+    query = request.GET.get('q')
+    if query:
+        vendor_ids = [vendor.id for vendor in Vendor.objects.filter(name__icontains=query)]
+        po_list = po_list.filter(
+            Q(po_number__icontains=query) | Q(vendor__in=vendor_ids)
+        )
+
+    paginator = Paginator(po_list, 10)
+    page = request.GET.get('page')
+    try:
+        purchase_orders = paginator.page(page)
+    except PageNotAnInteger:
+        purchase_orders = paginator.page(1)
+    except EmptyPage:
+        purchase_orders = paginator.page(paginator.num_pages)
+
+    return render(request, 'po_list.html', {'purchase_orders': purchase_orders})
+
+@login_required
+@roles_required(allowed_roles=['admin', 'project_manager', 'accountant'])
+def po_detail(request, pk):
+    try:
+        po = PurchaseOrder.objects.get(pk=pk)
+        client = Client.load()
+    except DoesNotExist:
+        return redirect('po_list')
+    return render(request, 'po_detail.html', {'po': po, 'client': client})
+
+@login_required
+@roles_required(allowed_roles=['admin', 'project_manager'])
+def po_create(request):
+    if request.method == 'POST':
+        po_form = PurchaseOrderForm(request.POST)
+        formset = PurchaseOrderItemFormSet(request.POST)
+        if po_form.is_valid() and formset.is_valid():
+            vendor_id = po_form.cleaned_data['vendor']
+            vendor = Vendor.objects.get(pk=vendor_id)
+            po = PurchaseOrder(
+                vendor=vendor,
+                po_date=po_form.cleaned_data['po_date'],
+                terms=po_form.cleaned_data['terms'],
+            )
+            if po_form.cleaned_data.get('po_number'):
+                po.po_number = po_form.cleaned_data['po_number']
+
+            items = []
+            for item_form in formset:
+                if item_form.cleaned_data:
+                    item = PurchaseOrderItem(**item_form.cleaned_data)
+                    items.append(item)
+            po.items = items
+            po.save()
+            return redirect('po_list')
+    else:
+        po_form = PurchaseOrderForm()
+        formset = PurchaseOrderItemFormSet()
+    return render(request, 'po_form.html', {'po_form': po_form, 'formset': formset})
+
+@login_required
+@roles_required(allowed_roles=['admin', 'project_manager'])
+def po_update(request, pk):
+    try:
+        po = PurchaseOrder.objects.get(pk=pk)
+    except DoesNotExist:
+        return redirect('po_list')
+
+    if request.method == 'POST':
+        po_form = PurchaseOrderForm(request.POST)
+        formset = PurchaseOrderItemFormSet(request.POST)
+        if po_form.is_valid() and formset.is_valid():
+            vendor_id = po_form.cleaned_data['vendor']
+            po.vendor = Vendor.objects.get(pk=vendor_id)
+            po.po_date = po_form.cleaned_data['po_date']
+            po.terms = po_form.cleaned_data['terms']
+            po.po_number = po_form.cleaned_data['po_number']
+
+            items = []
+            for item_form in formset:
+                if item_form.cleaned_data:
+                    item = PurchaseOrderItem(**item_form.cleaned_data)
+                    items.append(item)
+            po.items = items
+            po.save()
+            return redirect('po_list')
+    else:
+        initial_po_data = {
+            'vendor': str(po.vendor.id),
+            'po_date': po.po_date.strftime('%Y-%m-%d'),
+            'terms': po.terms,
+            'po_number': po.po_number,
+        }
+        po_form = PurchaseOrderForm(initial=initial_po_data)
+        initial_items_data = [item.to_mongo().to_dict() for item in po.items]
+        formset = PurchaseOrderItemFormSet(initial=initial_items_data)
+
+    return render(request, 'po_form.html', {'po_form': po_form, 'formset': formset, 'po': po})
+
+@login_required
+@roles_required(allowed_roles=['admin', 'project_manager'])
+def po_delete(request, pk):
+    try:
+        po = PurchaseOrder.objects.get(pk=pk)
+    except DoesNotExist:
+        return redirect('po_list')
+
+    if request.method == 'POST':
+        po.delete()
+        return redirect('po_list')
+    return render(request, 'po_confirm_delete.html', {'po': po})
+
+@login_required
+@roles_required(allowed_roles=['admin', 'project_manager', 'accountant'])
+def po_download(request, pk):
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    client = Client.load()
+    html_string = render_to_string('po_detail.html', {'po': po, 'client': client})
+    pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf()
+    
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="PO_{po.po_number}.pdf"'
+    return response
+
+@login_required
+@roles_required(allowed_roles=['admin', 'project_manager', 'accountant'])
+def po_bulk_download(request):
+    if request.method == 'POST':
+        po_ids = request.POST.getlist('po_ids')
+        if not po_ids:
+            return redirect('po_list')
+
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for po_id in po_ids:
+                po = get_object_or_404(PurchaseOrder, pk=po_id)
+                client = Client.load()
+                html_string = render_to_string('po_detail.html', {'po': po, 'client': client})
+                pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf()
+                filename = f"PO_{po.po_number.replace('/', '-')}.pdf"
+                zf.writestr(filename, pdf_file)
+        
+        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="purchase_orders.zip"'
+        return response
+    return redirect('po_list')
