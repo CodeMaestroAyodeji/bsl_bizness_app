@@ -59,10 +59,7 @@ import base64
 @roles_required(allowed_roles=['admin', 'project_manager', 'accountant'])
 def vendor_detail(request, pk):
     vendor = Vendor.objects.get(pk=pk)
-    logo_data = None
-    if vendor.logo:
-        logo_data = base64.b64encode(vendor.logo.read()).decode('utf-8')
-    return render(request, 'vendor_detail.html', {'vendor': vendor, 'logo_data': logo_data})
+    return render(request, 'vendor_detail.html', {'vendor': vendor})
 
 @roles_required(allowed_roles=['admin', 'project_manager'])
 def vendor_create(request):
@@ -167,9 +164,10 @@ def invoice_list(request):
 def invoice_detail(request, pk):
     try:
         invoice = Invoice.objects.get(pk=pk)
+        client = Client.load()
     except DoesNotExist:
         return redirect('invoice_list') # Or render a 404 page
-    return render(request, 'invoice_detail.html', {'invoice': invoice})
+    return render(request, 'invoice_detail.html', {'invoice': invoice, 'client': client})
 
 @login_required
 @roles_required(allowed_roles=['admin', 'project_manager'])
@@ -325,3 +323,42 @@ def invoice_bulk_download(request):
         response['Content-Disposition'] = 'attachment; filename="invoices.zip"'
         return response
     return redirect('invoice_list')
+
+
+
+from django.http import HttpResponse
+
+def vendor_logo(request, pk):
+    vendor = Vendor.objects.get(pk=pk)
+    try:
+        if vendor.logo and vendor.logo.grid_id:
+            return HttpResponse(vendor.logo.read(), content_type=vendor.logo.content_type)
+    except AttributeError:
+        pass  # Fall through to generating a logo
+
+    # Generate a logo
+    name = vendor.name
+    initials = ''.join([s[0] for s in name.split()]).upper()
+    
+    # Create a circular image
+    img = Image.new('RGBA', (100, 100), (255, 255, 255, 0))
+    draw = ImageDraw.Draw(img)
+    
+    # Draw a circle
+    draw.ellipse((0, 0, 100, 100), fill=(73, 109, 137), outline=None)
+    
+    # Add text
+    try:
+        font = ImageFont.truetype("arial.ttf", 40)
+    except IOError:
+        font = ImageFont.load_default()
+    
+    # Center the text
+    text_width = font.getlength(initials)
+    position = ((100 - text_width) / 2, 25)
+    draw.text(position, initials, fill=(255, 255, 0), font=font)
+    
+    # Save to buffer
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    return HttpResponse(buffer.getvalue(), content_type='image/png')

@@ -8,120 +8,255 @@
 
     <form method="post">
         {% csrf_token %}
-
-        <!-- Invoice Details -->
-        <div class="card mb-4 shadow-sm rounded-4">
-            <div class="card-header" style="background-color:#CABE9F; color:#fff; font-weight:bold;">
-                Invoice Details
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="{{ invoice_form.vendor.id_for_label }}" class="form-label fw-semibold">Vendor</label>
-                        {{ invoice_form.vendor }}
-                        {% if invoice_form.vendor.errors %}
-                            <div class="text-danger small">{{ invoice_form.vendor.errors }}</div>
-                        {% endif %}
+        <div class="row g-4">
+            <!-- Left Column: Invoice Items -->
+            <div class="col-lg-9">
+                <div class="card shadow-sm rounded-4 h-100">
+                                        <div class="card-header" style="background-color:#CABE9F; color:#fff; font-weight:bold;">
+                        Invoice Items
                     </div>
-                    <div class="col-md-6">
-                        <label for="{{ invoice_form.invoice_date.id_for_label }}" class="form-label fw-semibold">Invoice Date</label>
-                        {{ invoice_form.invoice_date }}
-                        {% if invoice_form.invoice_date.errors %}
-                            <div class="text-danger small">{{ invoice_form.invoice_date.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="mt-3">
-                    <label for="{{ invoice_form.invoice_number.id_for_label }}" class="form-label fw-semibold">Invoice Number</label>
-                    {{ invoice_form.invoice_number }}
-                    {% if invoice_form.invoice_number.errors %}
-                        <div class="text-danger small">{{ invoice_form.invoice_number.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="mt-3">
-                    <label for="{{ invoice_form.terms.id_for_label }}" class="form-label fw-semibold">Terms</label>
-                    {{ invoice_form.terms }}
-                    {% if invoice_form.terms.errors %}
-                        <div class="text-danger small">{{ invoice_form.terms.errors }}</div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Invoice Items -->
-        <div class="card mb-4 shadow-sm rounded-4">
-            <div class="card-header" style="background-color:#CABE9F; color:#fff; font-weight:bold;">
-                Invoice Items
-            </div>
-            <div class="card-body">
-                <div id="formset-container">
-                    {{ formset.management_form }}
-                    {% for item_form in formset %}
-                        <div class="formset-row mb-3 p-3 border rounded shadow-sm">
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Description</label>
-                                    {{ item_form.description }}
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label fw-semibold">Quantity</label>
-                                    {{ item_form.quantity }}
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label fw-semibold">Unit Price</label>
-                                    {{ item_form.unit_price }}
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label fw-semibold">Discount</label>
-                                    {{ item_form.discount }}
-                                </div>
-                                <div class="col-md-1 d-flex align-items-end">
-                                    <div class="form-check">
-                                        {{ item_form.tax }}
-                                        <label class="form-check-label">Tax</label>
+                    <div class="card-body overflow-auto" style="max-height:75vh;">
+                        <div id="formset-container">
+                            {{ formset.management_form }}
+                            {% for item_form in formset %}
+                                <div class="formset-row mb-3 p-3 border rounded shadow-sm">
+                                    <div class="row g-2">
+                                        <!-- Description (50%) -->
+                                        <div class="col-md-8">
+                                            {{ item_form.description }}
+                                        </div>
+                                        <!-- Quantity -->
+                                        <div class="col-md-2">
+                                            {{ item_form.quantity }}
+                                        </div>
+                                        <!-- Unit Price -->
+                                        <div class="col-md-2">
+                                            {{ item_form.unit_price }}
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mt-2">
+                                        <!-- Discount -->
+                                        <div class="col-md-4">
+                                            {{ item_form.discount }}
+                                        </div>
+                                        <!-- Tax -->
+                                        <div class="col-md-4 d-flex align-items-center">
+                                            <div class="form-check">
+                                                {{ item_form.tax }}
+                                                <label class="form-check-label" for="{{ item_form.tax.id_for_label }}">Tax</label>
+                                            </div>
+                                        </div>
+                                        <!-- Remove Button -->
+                                        <div class="col-md-4 d-flex align-items-center">
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-item">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-1 d-flex align-items-end">
-                                    <button type="button" class="btn btn-danger btn-sm remove-item">Remove</button>
-                                </div>
-                            </div>
-                            {% if item_form.errors %}
-                                <div class="text-danger mt-2">
-                                    {% for field_name, errors in item_form.errors.items %}
-                                        {{ field_name }}: {{ errors|join:", " }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                            {% endfor %}
                         </div>
-                    {% endfor %}
+
+                        <button type="button" class="btn btn-outline-success mt-2" id="add-item">
+                            <i class="bi bi-plus-circle"></i> Add Item
+                        </button>
+                    </div>
+
                 </div>
-                <button type="button" class="btn btn-success mt-2" id="add-item">Add Item</button>
             </div>
-        </div>
 
-        <!-- Summary -->
-        <div class="card mb-4 shadow-sm rounded-4">
-            <div class="card-header" style="background-color:#CABE9F; color:#fff; font-weight:bold;">
-                Summary
-            </div>
-            <div class="card-body">
-                <p><strong>Sub-total:</strong> <span id="sub_total">0.00</span></p>
-                <p><strong>Total Discount:</strong> <span id="total_discount">0.00</span></p>
-                <p><strong>Total Tax:</strong> <span id="total_tax">0.00</span></p>
-                <h4><strong>Total:</strong> <span id="total">0.00</span></h4>
-                <p><strong>Total in Words:</strong> <span id="total_in_words"></span></p>
-            </div>
-        </div>
+            <!-- Right Column: Invoice Details + Summary -->
+            <div class="col-lg-3 d-flex flex-column gap-3">
+                <!-- Invoice Details -->
+                <div class="card shadow-sm rounded-4">
+                    <div class="card-header" style="background-color:#CABE9F; color:#fff; font-weight:bold;">
+                        Invoice Details
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ invoice_form.vendor }}
+                        </div>
+                        <div class="mb-3">
+                            {{ invoice_form.invoice_date }}
+                        </div>
+                        <div class="mb-3">
+                            {{ invoice_form.invoice_number }}
+                        </div>
+                        <div class="mb-3">
+                            {{ invoice_form.terms }}
+                        </div>
+                    </div>
+                </div>
 
-        <!-- Actions -->
-        <div class="d-flex gap-2 mb-4">
-            <button type="submit" class="btn" style="background-color:#E6A407; color:#fff;">
-                {% if invoice %}Update Invoice{% else %}Create Invoice{% endif %}
-            </button>
-            <a href="{% url 'invoice_list' %}" class="btn btn-secondary">Cancel</a>
+                <!-- Summary -->
+                <div class="card shadow-sm rounded-4">
+                    <div class="card-header" style="background-color:#CABE9F; color:#fff; font-weight:bold;">
+                        Summary
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Sub-total:</strong> <span id="sub_total">₦0.00</span></p>
+                        <p><strong>Total Discount:</strong> <span id="total_discount">₦0.00</span></p>
+                        <p><strong>Total Tax:</strong> <span id="total_tax">₦0.00</span></p>
+                        <h4><strong>Total:</strong> <span id="total">₦0.00</span></h4>
+                        <p><strong>Total in Words:</strong> <span id="total_in_words"></span></p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2 mt-auto">
+                    <button type="submit" class="btn" style="background-color:#E6A407; color:#fff;">
+                        {% if invoice %}Update Invoice{% else %}Create Invoice{% endif %}
+                    </button>
+                    <a href="{% url 'invoice_list' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </div>
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const formsetContainer = document.getElementById("formset-container");
+    const addItemButton = document.getElementById("add-item");
+    const totalFormsInput = document.querySelector("input[name='form-TOTAL_FORMS']");
+    const formsetPrefix = "form";
+
+    // Function to format numbers as Nigerian Naira
+    function formatNaira(amount) {
+        return "₦" + Number(amount).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Function to convert number to words (simple version)
+    function numberToWords(num) {
+        const a = ['','one ','two ','three ','four ', 'five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
+        const b = ['', '', 'twenty','thirty','forty','fifty', 'sixty','seventy','eighty','ninety'];
+        if ((num = num.toString()).length > 9) return 'overflow';
+        n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+        if (!n) return; var str = '';
+        str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'crore ' : '';
+        str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'lakh ' : '';
+        str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'thousand ' : '';
+        str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'hundred ' : '';
+        str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+        return str.trim() + ' Naira';
+    }
+
+    // Main calculation function
+    function updateTotals() {
+        let subtotal = 0;
+        let totalDiscount = 0;
+        let totalTax = 0;
+
+        document.querySelectorAll(".formset-row").forEach(row => {
+            const qtyInput = row.querySelector("input[name$='-quantity']");
+            const priceInput = row.querySelector("input[name$='-unit_price']");
+            const discountInput = row.querySelector("input[name$='-discount']");
+            const taxCheckbox = row.querySelector("input[name$='-tax']");
+
+            const qty = parseFloat(qtyInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            const discount = parseFloat(discountInput.value) || 0;
+            const tax = taxCheckbox && taxCheckbox.checked ? 0.075 : 0; // 7.5%
+
+            const lineTotal = qty * price;
+            const lineDiscount = (lineTotal * discount) / 100;
+            const taxableAmount = lineTotal - lineDiscount;
+            const lineTax = taxableAmount * tax;
+
+            subtotal += lineTotal;
+            totalDiscount += lineDiscount;
+            totalTax += lineTax;
+        });
+
+        const total = subtotal - totalDiscount + totalTax;
+
+        document.getElementById("sub_total").innerText = formatNaira(subtotal);
+        document.getElementById("total_discount").innerText = formatNaira(totalDiscount);
+        document.getElementById("total_tax").innerText = formatNaira(totalTax);
+        document.getElementById("total").innerText = formatNaira(total);
+        document.getElementById("total_in_words").innerText = numberToWords(Math.floor(total));
+    }
+
+    // Function to attach listeners to a row
+    function attachListeners(row) {
+        row.querySelectorAll("input").forEach(input => {
+            input.addEventListener("input", updateTotals);
+            input.addEventListener("change", updateTotals);
+        });
+
+        const removeButton = row.querySelector(".remove-item");
+        if (removeButton) {
+            removeButton.addEventListener("click", function() {
+                row.remove();
+                updateTotals();
+            });
+        }
+    }
+
+    // Add new formset item
+    addItemButton.addEventListener("click", function() {
+        let formIndex = parseInt(totalFormsInput.value);
+
+        const newRow = document.createElement("div");
+        newRow.classList.add("formset-row", "mb-3", "p-3", "border", "rounded", "shadow-sm");
+        newRow.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-8">
+                    <input type="text" name="${formsetPrefix}-${formIndex}-description" class="form-control" placeholder="Description">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="${formsetPrefix}-${formIndex}-quantity" class="form-control" value="1" placeholder="Qty">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="${formsetPrefix}-${formIndex}-unit_price" class="form-control" step="0.01" placeholder="Unit Price">
+                </div>
+            </div>
+            <div class="row g-2 mt-2">
+                <div class="col-md-4">
+                    <input type="number" name="${formsetPrefix}-${formIndex}-discount" class="form-control" value="0" step="0.01" placeholder="Discount (%)">
+                </div>
+                <div class="col-md-4 d-flex align-items-center">
+                    <div class="form-check">
+                        <input type="checkbox" name="${formsetPrefix}-${formIndex}-tax" id="id_${formsetPrefix}-${formIndex}-tax" class="form-check-input">
+                        <label class="form-check-label" for="id_${formsetPrefix}-${formIndex}-tax">Tax</label>
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-center">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-item">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <input type="hidden" name="${formsetPrefix}-${formIndex}-id" id="id_${formsetPrefix}-${formIndex}-id">
+            <input type="hidden" name="${formsetPrefix}-${formIndex}-invoice" id="id_${formsetPrefix}-${formIndex}-invoice">
+        `;
+
+        formsetContainer.appendChild(newRow);
+        attachListeners(newRow);
+
+        totalFormsInput.value = formIndex + 1;
+        updateTotals();
+    });
+
+    // Initial attachment of listeners
+    document.querySelectorAll(".formset-row").forEach(row => {
+        attachListeners(row);
+    });
+
+    // Initial calculation
+    updateTotals();
+
+    // Set default invoice date to today
+    const dateInput = document.querySelector("input[name='invoice_date']");
+    if (dateInput && !dateInput.value) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+    }
+});
+</script>
 {% endblock %}

@@ -35,8 +35,8 @@ class UserRoleForm(forms.ModelForm):
 # New Forms for Invoice
 class InvoiceForm(forms.Form):
     vendor = forms.ChoiceField(choices=[])
-    invoice_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
-    terms = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    invoice_date = forms.DateField(widget=forms.DateInput(attrs={'placeholder': 'DD/MM/YYYY'}), input_formats=['%d/%m/%Y', '%Y-%m-%d'])
+    terms = forms.CharField(widget=forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}), required=False)
     invoice_number = forms.CharField(max_length=255, required=False) # For editing
 
     def __init__(self, *args, **kwargs):
@@ -44,10 +44,10 @@ class InvoiceForm(forms.Form):
         self.fields['vendor'].choices = [("", "Select a Vendor")] + [(str(v.id), v.name) for v in Vendor.objects.all()]
 
 class InvoiceItemForm(forms.Form):
-    description = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
-    quantity = forms.FloatField(widget=forms.NumberInput(attrs={'class': 'form-control quantity'}))
-    unit_price = forms.DecimalField(widget=forms.NumberInput(attrs={'class': 'form-control unit_price'}))
-    discount = forms.DecimalField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control discount'}))
-    tax = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input tax'}))
+    description = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Description'}))
+    quantity = forms.FloatField(widget=forms.NumberInput(attrs={'class': 'form-control quantity item-input', 'placeholder': 'Quantity'}))
+    unit_price = forms.DecimalField(widget=forms.NumberInput(attrs={'class': 'form-control unit_price item-input', 'placeholder': 'Unit Price'}))
+    discount = forms.DecimalField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control discount item-input', 'placeholder': 'Discount'}))
+    tax = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input tax item-input'}))
 
 InvoiceItemFormSet = forms.formset_factory(InvoiceItemForm, extra=1)

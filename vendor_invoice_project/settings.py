@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'invoice',
     'mongoengine',
     'widget_tweaks',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [
